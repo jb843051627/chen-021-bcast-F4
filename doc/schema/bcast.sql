@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS t_bcast_case_flow (
   biz_no varchar(64) DEFAULT NULL COMMENT '播出事故处置单代号',
   stage int DEFAULT NULL COMMENT '当前步次 0..3（发现核实/处置抢险/恢复确认/上报结案）',
   status int DEFAULT NULL COMMENT '处置会落 0未起 1在办 2已收了口',
-  content varchar(255) DEFAULT NULL COMMENT '一段一记',
+  content varchar(2000) DEFAULT NULL COMMENT '一段一记（挪步出口落下的分段记载：第k步|时刻|话；沉底的、收口的也留在这）',
   last_action varchar(64) DEFAULT NULL COMMENT '最近一次挪步动作',
   del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
   create_by varchar(64) DEFAULT NULL COMMENT '创建者',

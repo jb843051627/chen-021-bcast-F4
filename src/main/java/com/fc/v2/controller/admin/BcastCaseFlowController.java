@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 播出事故处置单 Controller（state-machine 形状：流转入口）
  *
+ * <p>屏上只有这一处把手，往前、往后都递到服务层那一个挪步出口；归在第几步、
+ * 收不收、改不改得动，屏上不自作主张，也不留第二处能挪步次的把手。
+ * 旧的 /advance（一推两档）、/rollback（一退到底）两条老路已经关掉。</p>
+ *
  * @author fuce
  * @date 2026-09-14
  */
@@ -51,21 +55,21 @@ public class BcastCaseFlowController extends BaseController {
         return pageTable(page.getList(), page.getTotal());
     }
 
-    @Log(title = "播出事故处置单推进", action = "advance")
-    @ApiOperation(value = "推进一档", notes = "推进一档")
-    @PostMapping("/advance")
-    @RequiresPermissions("bcastCaseFlow:advance")
+    @Log(title = "播出事故处置单往前挪", action = "moveForward")
+    @ApiOperation(value = "往前挪一步", notes = "只进紧挨着的后一步；递上来的步次只算意图")
+    @PostMapping("/moveForward")
+    @RequiresPermissions("bcastCaseFlow:moveForward")
     @ResponseBody
-    public AjaxResult advance(Long id, String remark) {
-        return toAjax(bcastCaseFlowService.advance(id, remark) != null ? 1 : 0);
+    public AjaxResult moveForward(Long id, Integer intentStage, String report) {
+        return toAjax(bcastCaseFlowService.moveForward(id, intentStage, report) != null ? 1 : 0);
     }
 
-    @Log(title = "播出事故处置单回退", action = "rollback")
-    @ApiOperation(value = "回退一档", notes = "回退一档")
-    @PostMapping("/rollback")
-    @RequiresPermissions("bcastCaseFlow:rollback")
+    @Log(title = "播出事故处置单往后退", action = "moveBackward")
+    @ApiOperation(value = "往后退一步", notes = "一次退一步；已经停在第一步的不再往后收")
+    @PostMapping("/moveBackward")
+    @RequiresPermissions("bcastCaseFlow:moveBackward")
     @ResponseBody
-    public AjaxResult rollback(Long id, String remark) {
-        return toAjax(bcastCaseFlowService.rollback(id, remark) != null ? 1 : 0);
+    public AjaxResult moveBackward(Long id, String report) {
+        return toAjax(bcastCaseFlowService.moveBackward(id, report) != null ? 1 : 0);
     }
 }
