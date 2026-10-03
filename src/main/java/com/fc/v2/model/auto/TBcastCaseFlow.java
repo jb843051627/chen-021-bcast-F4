@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -55,6 +56,43 @@ public class TBcastCaseFlow implements Serializable {
     @TableField("last_action")
     @ApiModelProperty(value = "最近一次挪步动作")
     private String lastAction;
+
+    /** 发现核实门槛之一：台站代号 */
+    @TableField("site_code")
+    @ApiModelProperty(value = "发现核实门槛之一：台站代号")
+    private String siteCode;
+
+    /** 发现核实门槛之一：中断起于哪一刻 */
+    @TableField("outage_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @ApiModelProperty(value = "发现核实门槛之一：中断起于哪一刻")
+    private Date outageAt;
+
+    /** 发现核实门槛之一：恢复到哪一刻（也是恢复确认起算钟点的那一刻） */
+    @TableField("recover_at")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @ApiModelProperty(value = "发现核实门槛之一：恢复到哪一刻")
+    private Date recoverAt;
+
+    /** 发现核实门槛之一：被影响到的户数 */
+    @TableField("affected_count")
+    @ApiModelProperty(value = "发现核实门槛之一：被影响到的户数")
+    private Long affectedCount;
+
+    /** 处置抢险门槛：抢险那几笔记载（填没填全看它） */
+    @TableField("rescue_note")
+    @ApiModelProperty(value = "处置抢险门槛：抢险那几笔记载")
+    private String rescueNote;
+
+    /** 恢复确认门槛：当地定的恢复后须连着正常播够的钟点数 */
+    @TableField("normal_hours")
+    @ApiModelProperty(value = "恢复确认门槛：恢复后须连着正常播够的钟点数")
+    private BigDecimal normalHours;
+
+    /** 上报结案门槛：省局落下的结论（不必处置/就地终止两说也算收口） */
+    @TableField("province_result")
+    @ApiModelProperty(value = "上报结案门槛：省局结论")
+    private String provinceResult;
 
     /** 删除标记 0正常 1删除 */
     @TableField("del_flag")
@@ -134,6 +172,62 @@ public class TBcastCaseFlow implements Serializable {
 
     public void setLastAction(String lastAction) {
         this.lastAction = lastAction;
+    }
+
+    public String getSiteCode() {
+        return siteCode;
+    }
+
+    public void setSiteCode(String siteCode) {
+        this.siteCode = siteCode;
+    }
+
+    public Date getOutageAt() {
+        return outageAt;
+    }
+
+    public void setOutageAt(Date outageAt) {
+        this.outageAt = outageAt;
+    }
+
+    public Date getRecoverAt() {
+        return recoverAt;
+    }
+
+    public void setRecoverAt(Date recoverAt) {
+        this.recoverAt = recoverAt;
+    }
+
+    public Long getAffectedCount() {
+        return affectedCount;
+    }
+
+    public void setAffectedCount(Long affectedCount) {
+        this.affectedCount = affectedCount;
+    }
+
+    public String getRescueNote() {
+        return rescueNote;
+    }
+
+    public void setRescueNote(String rescueNote) {
+        this.rescueNote = rescueNote;
+    }
+
+    public BigDecimal getNormalHours() {
+        return normalHours;
+    }
+
+    public void setNormalHours(BigDecimal normalHours) {
+        this.normalHours = normalHours;
+    }
+
+    public String getProvinceResult() {
+        return provinceResult;
+    }
+
+    public void setProvinceResult(String provinceResult) {
+        this.provinceResult = provinceResult;
     }
 
     public Integer getDelFlag() {

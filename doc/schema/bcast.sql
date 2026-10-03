@@ -5,18 +5,41 @@
 CREATE TABLE IF NOT EXISTS t_bcast_case_flow (
   id bigint NOT NULL COMMENT '主键',
   biz_no varchar(64) DEFAULT NULL COMMENT '播出事故处置单代号',
-  stage int DEFAULT NULL COMMENT '当前步次 0..3（发现核实/处置抢险/恢复确认/上报结案）',
+  stage int DEFAULT NULL COMMENT '当前步次（纸面意图，0..3 发现核实/处置抢险/恢复确认/上报结案；作准的步次由系统数过步段得出，见 t_bcast_case_flow_log）',
   status int DEFAULT NULL COMMENT '处置会落 0未起 1在办 2已收了口',
   content varchar(255) DEFAULT NULL COMMENT '一段一记',
   last_action varchar(64) DEFAULT NULL COMMENT '最近一次挪步动作',
-  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  site_code varchar(64) DEFAULT NULL COMMENT '发现核实门槛之一：台站代号',
+  outage_at datetime DEFAULT NULL COMMENT '发现核实门槛之一：中断起于哪一刻',
+  recover_at datetime DEFAULT NULL COMMENT '发现核实门槛之一：恢复到哪一刻（也是恢复确认起算钟点的那一刻）',
+  affected_count bigint DEFAULT NULL COMMENT '发现核实门槛之一：被影响到的户数',
+  rescue_note varchar(500) DEFAULT NULL COMMENT '处置抢险门槛：抢险那几笔记载（填没填全看它）',
+  normal_hours decimal(6,2) DEFAULT NULL COMMENT '恢复确认门槛：当地定的恢复后须连着正常播够的钟点数',
+  province_result varchar(64) DEFAULT NULL COMMENT '上报结案门槛：省局落下的结论（不必处置/就地终止两说也算收口）',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除（仅在办单中途叫停时落；收了口的删不掉）',
   create_by varchar(64) DEFAULT NULL COMMENT '创建者',
   create_time datetime DEFAULT NULL COMMENT '创建时间',
   update_by varchar(64) DEFAULT NULL COMMENT '更新者',
   update_time datetime DEFAULT NULL COMMENT '更新时间',
   remark varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  KEY idx_case_status (status, del_flag)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='播出事故处置单';
+
+-- 处置单一段一段的记载：挪一步、退一步、收一句都各落一行，同刹两条进来各记各的，不归并不漏记。
+-- 事后从上报结案倒着数回发现核实，逐段清点就翻这张表；当前步次 = FORWARD 段数 - BACK 段数，
+-- 不看主单纸面临的 stage。
+CREATE TABLE IF NOT EXISTS t_bcast_case_flow_log (
+  id bigint NOT NULL COMMENT '主键',
+  case_id bigint NOT NULL COMMENT '所属处置单 t_bcast_case_flow.id',
+  stage int DEFAULT NULL COMMENT '这一段落在哪一步（FORWARD 记踏进的步次，BACK 记退回后所在步次，TERMINAL 记收口时步次）',
+  action varchar(32) DEFAULT NULL COMMENT '记载种类 OPEN 立案 / FORWARD 往前 / BACK 往后 / TERMINAL 收口',
+  content varchar(255) DEFAULT NULL COMMENT '这一步记下的原话（同一步二次上报不再添行，卷上留的还是首次那句）',
+  create_by varchar(64) DEFAULT NULL COMMENT '记载人',
+  create_time datetime DEFAULT NULL COMMENT '落在哪一刻',
+  PRIMARY KEY (id),
+  KEY idx_log_case (case_id, action)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='处置单逐段记载';
 
 CREATE TABLE IF NOT EXISTS t_bcast_off_row (
   id bigint NOT NULL COMMENT '主键',

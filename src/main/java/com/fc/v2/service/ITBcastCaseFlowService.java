@@ -2,32 +2,23 @@ package com.fc.v2.service;
 
 import java.util.List;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.fc.v2.model.auto.TBcastCaseFlow;
 
 /**
- * 播出事故处置单 Service接口（state-machine 形状：单据流转，不提供增删改查全套）
+ * 播出事故处置单台账 Service接口（只查账，不挪步）。
+ *
+ * <p>挪步、收口、改字、叫停一律走 {@link IBcastCaseFlowMoveService} 那一个出口，
+ * 本接口只摆台账、不写单据——能挪步次的把手一处都不留，屏上因此只有一处能往前挪。</p>
  *
  * @author fuce
  * @date 2026-09-14
  */
 public interface ITBcastCaseFlowService {
 
-    /** 按主键查询单据 */
+    /** 按主键查单据（已收口的仍查得到，年末要凭它追当年结/终止的来由） */
     TBcastCaseFlow selectTBcastCaseFlowById(Long id);
 
-    /** 列表查询（流转台账） */
-    List<TBcastCaseFlow> selectTBcastCaseFlowList(QueryWrapper<TBcastCaseFlow> queryWrapper);
-
-    /** 推进一档：返回更新后的单据；被拒返回 null */
-    TBcastCaseFlow advance(Long id, String remark);
-
-    /** 回退一档：返回更新后的单据；被拒返回 null */
-    TBcastCaseFlow rollback(Long id, String remark);
-
-    /** 修改内容：已办结不得再改，被拒返回 false */
-    boolean updateContent(Long id, String remark);
-
-    /** 删除单据：已办结不得删除，被拒返回 false */
-    boolean remove(Long id);
+    /** 台账列表：递进来的条件照用，只补一条删除标记，已收口的不抹、仍在台账上 */
+    List<TBcastCaseFlow> selectTBcastCaseFlowList(Wrapper<TBcastCaseFlow> queryWrapper);
 }

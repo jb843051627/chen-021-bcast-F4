@@ -4,13 +4,22 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fc.v2.mapper.auto.TBcastCaseFlowMapper;
 import com.fc.v2.model.auto.TBcastCaseFlow;
 import com.fc.v2.service.ITBcastCaseFlowService;
 
 /**
- * 播出事故处置单 Service业务层处理（state-machine 形状：单据流转）
+ * 播出事故处置单台账 Service业务层处理（只查账）。
+ *
+ * <p>早先的 advance 一脚踏两档（st+2）、rollback 一步踢回首档、updateContent/remove
+ * 对收口单也照改照删——那是与挪步出口并存的第二道口子，正是今年要关掉的那一条。
+ * 如今本类只摆台账：立案、往前、往后、补料、收口、叫停一律没有，全归
+ * {@link TBcastCaseFlowMoveServiceImpl} 独家。</p>
+ *
+ * <p>不继承 ServiceImpl：IService 的 save/updateById/removeById 是绕得过去的写口，
+ * 台账这一层不许它开张。</p>
  *
  * @author fuce
  * @date 2026-09-14
@@ -18,67 +27,29 @@ import com.fc.v2.service.ITBcastCaseFlowService;
 @Service
 public class TBcastCaseFlowServiceImpl implements ITBcastCaseFlowService {
 
-    private static final int MAX_STAGE = 3;
-    private static final int STATUS_ACTIVE = 1;
-    private static final int STATUS_TERMINAL = 2;
-
     @javax.annotation.Resource
     private TBcastCaseFlowMapper bcastCaseFlowMapper;
 
     @Override
     public TBcastCaseFlow selectTBcastCaseFlowById(Long id) {
-        return this.bcastCaseFlowMapper.selectById(id);
+        return this.bcastCaseFlowMapper.selectOne(new QueryWrapper<TBcastCaseFlow>()
+                .eq("id", id)
+                .eq("del_flag", 0));
     }
 
+    /**
+     * 台账只摆库里确有的单：递进来的条件照用，只补一条删除标记。
+     * 收口单不另设状态过滤——年末要翻它追当年凭什么结、凭什么终止。
+     */
     @Override
-    public List<TBcastCaseFlow> selectTBcastCaseFlowList(QueryWrapper<TBcastCaseFlow> queryWrapper) {
-        return this.bcastCaseFlowMapper.selectList(queryWrapper);
-    }
-
-    @Override
-    public TBcastCaseFlow advance(Long id, String remark) {
-        TBcastCaseFlow r = this.bcastCaseFlowMapper.selectById(id);
-        if (r == null) {
-            return null;
+    public List<TBcastCaseFlow> selectTBcastCaseFlowList(Wrapper<TBcastCaseFlow> queryWrapper) {
+        QueryWrapper<TBcastCaseFlow> wrapper;
+        if (queryWrapper instanceof QueryWrapper) {
+            wrapper = (QueryWrapper<TBcastCaseFlow>) queryWrapper;
+        } else {
+            wrapper = new QueryWrapper<TBcastCaseFlow>();
         }
-        int st = r.getStage() == null ? 0 : r.getStage();
-        r.setStage(Math.min(st + 2, MAX_STAGE));
-        r.setStatus(STATUS_ACTIVE);
-        r.setLastAction(remark);
-        this.bcastCaseFlowMapper.updateById(r);
-        return r;
+        wrapper.eq("del_flag", 0);
+        return this.bcastCaseFlowMapper.selectList(wrapper);
     }
-
-    @Override
-    public TBcastCaseFlow rollback(Long id, String remark) {
-        TBcastCaseFlow r = this.bcastCaseFlowMapper.selectById(id);
-        if (r == null) {
-            return null;
-        }
-        r.setStage(0);
-        r.setStatus(STATUS_ACTIVE);
-        r.setLastAction(remark);
-        this.bcastCaseFlowMapper.updateById(r);
-        return r;
-    }
-
-    @Override
-    public boolean updateContent(Long id, String remark) {
-        TBcastCaseFlow r = this.bcastCaseFlowMapper.selectById(id);
-        if (r == null) {
-            return false;
-        }
-        r.setContent(remark);
-        return this.bcastCaseFlowMapper.updateById(r) > 0;
-    }
-
-    @Override
-    public boolean remove(Long id) {
-        TBcastCaseFlow r = this.bcastCaseFlowMapper.selectById(id);
-        if (r == null) {
-            return false;
-        }
-        return this.bcastCaseFlowMapper.deleteById(id) > 0;
-    }
-
 }
